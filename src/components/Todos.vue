@@ -221,31 +221,41 @@ export default {
       };
 
       let storage = JSON.parse(localStorage.getItem('todos'));
-      let taskNumber = Number(localStorage.getItem('uid'));
-      if (storage === undefined || !Array.isArray(storage)) {
+      const taskNumberStr = localStorage.getItem('uid');
+      let taskNumber = Number(taskNumberStr);
+      let wrongUID = false;
+      // проверка на наличие uid storage (для обеспечения уникальных id)
+      if (taskNumberStr === null) {
+        wrongUID = true;
+      }
+      if (storage === null || !Array.isArray(storage)) {
         storage = [];
         taskNumber = 0;
+        wrongUID = false;
       }
-      localStorage.setItem('uid', taskNumber + 1);
-      storage.push({
-        uid: taskNumber + 1,
-        description: this.addTodoForm.description,
-        is_completed: this.addTodoForm.is_completed[0],
-      });
-      localStorage.setItem('todos', JSON.stringify(storage));
-      localStorage.setItem('uid', taskNumber + 1);
+      if (wrongUID) {
+        this.confirmationMessage = 'Кто-то стер хранилище UID. Больше ничего добавлять не буду. Очистите все.';
+        this.showDismissibleAlert = true;
+      } else {
+        localStorage.setItem('uid', taskNumber + 1);
+        storage.push({
+          uid: taskNumber + 1,
+          description: this.addTodoForm.description,
+          is_completed: this.addTodoForm.is_completed[0],
+        });
+        localStorage.setItem('todos', JSON.stringify(storage));
+        localStorage.setItem('uid', taskNumber + 1);
 
-      let numAllTasks = Number(localStorage.getItem('allTasks'));
-      if (numAllTasks === undefined) {
-        numAllTasks = 0;
+        let numAllTasks = Number(localStorage.getItem('allTasks'));
+        if (numAllTasks === undefined) {
+          numAllTasks = 0;
+        }
+        localStorage.setItem('allTasks', numAllTasks + 1);
+        this.getTodos();
+        this.confirmationMessage = `Задача "${requestData.description}" добавлена`;
+        this.showDismissibleAlert = true;
+        this.resetForm();
       }
-      localStorage.setItem('allTasks', numAllTasks + 1);
-
-
-      this.getTodos();
-      this.confirmationMessage = `Задача "${requestData.description}" добавлена`;
-      this.showDismissibleAlert = true;
-      this.resetForm();
     },
 
     onReset(event) {
@@ -267,7 +277,7 @@ export default {
       /*eslint-disable*/
       let foundUID = false;
       for (let note of storage) {
-        if (note.uid === this.updateTodoForm.uid) {
+        if (note.uid === this.updateTodoForm.uid+30) {
             note.description = this.updateTodoForm.description;
             note.is_completed = this.updateTodoForm.is_completed[0];
             foundUID = true;
@@ -275,9 +285,11 @@ export default {
       }
       /*eslint-disable*/
 
+      // проверка на валидный UID
       if (!foundUID) {
         this.confirmationMessage = 'Запись с заданным UID не найдена!';
         this.showDismissibleAlert = true;
+
       } else {
         localStorage.setItem('todos', JSON.stringify(storage));
         this.getTodos();
@@ -297,17 +309,26 @@ export default {
       const storage = JSON.parse(localStorage.getItem('todos'));
       const newList = [];
       let foundUID = false;
+      let rightNote = false;
       for (const note of storage) {
         if (note.uid !== todo.uid) {
           newList.push(note);
         } else {
+          // проверка на uid и соответвие записи в storage
           foundUID = true;
+          if (note.description === todo.description && note.is_completed === todo.is_completed) {
+            rightNote = true;
+          }
         }
       }
       if (!foundUID) {
         this.confirmationMessage = 'Запись с заданным UID не найдена!';
         this.showDismissibleAlert = true;
-      } else {
+      } else if (!rightNote) {
+        this.confirmationMessage = 'Запись не соответствует сохраненной. Удалять не буду.';
+        this.showDismissibleAlert = true;
+      }
+        else {
         localStorage.setItem('todos', JSON.stringify(newList));
         this.getTodos();
         this.confirmationMessage = 'Задача удалена из списка';
