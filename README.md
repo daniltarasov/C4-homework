@@ -1,3 +1,7 @@
+###
+Установка
+###
+
 Запустить из папки C4-homework-master команды:
 npm install
 npm run serve
