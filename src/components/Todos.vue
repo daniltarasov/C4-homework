@@ -277,7 +277,7 @@ export default {
       /*eslint-disable*/
       let foundUID = false;
       for (let note of storage) {
-        if (note.uid === this.updateTodoForm.uid+30) {
+        if (note.uid === this.updateTodoForm.uid) {
             note.description = this.updateTodoForm.description;
             note.is_completed = this.updateTodoForm.is_completed[0];
             foundUID = true;
